@@ -48,9 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         error_messages={
             "unique": _("A user with that username already exists."),
         },
-        null=True,
         unique=True,
-        blank=True,
     )
 
     is_active = models.BooleanField(default=True)
@@ -66,19 +64,18 @@ class User(AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = "username"
 
     def __str__(self):
-        return self.email
+        return self.username
 
     def clean(self):
         super().clean()
-        self.email = self.__class__.objects.normalize_email(self.email)
 
-    def send_email(self, subject: str, msg: str) -> bool:
-        try:
-            simple_send_mail(subject, msg, self.email)
-            return True
-        except Exception as e:
-            logger.warning(f"can't send email for {self.pk}-{self.email} because {e}")
-            return False
+    # def send_email(self, subject: str, msg: str) -> bool:
+    #     try:
+    #         simple_send_mail(subject, msg, self.email)
+    #         return True
+    #     except Exception as e:
+    #         logger.warning(f"can't send email for {self.pk}-{self.email} because {e}")
+    #         return False
     
     @property
     def is_staff(self):
