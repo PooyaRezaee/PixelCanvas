@@ -24,24 +24,16 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "default_se@cret_key@#$fa")
 
 
 THIRD_PARTY_APPS = [
-    
     "django_extensions",
     "rest_framework",
     "django_filters",
     "corsheaders",
     "drf_spectacular",
-    
-    
-    
-    
 ]
 LOCAL_APPS = [
-    "apps.sample.apps.SampleConfig",
     "apps.account.apps.AccountConfig",
-    
     "apps.api.apps.ApiConfig",
-    
-    
+    "apps.canvas.apps.CanvasConfig",
 ]
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -58,9 +50,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    
     "corsheaders.middleware.CorsMiddleware",
-    
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -152,13 +142,12 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+REDIS_LOCATION = os.getenv("REDIS_LOCATION", "redis://localhost:6379")
 CACHES = {
-    
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": os.getenv("REDIS_LOCATION", "redis://localhost:6379"),
+        "LOCATION": REDIS_LOCATION,
     }
-    
 }
 
 LOGGING_LEVEL = "DEBUG" if DEBUG else "INFO"
@@ -224,8 +213,3 @@ from .other.drf import *
 from .other.cors import *
 from .other.spectacular import *
 from .other.jwt import *
-
-
-
-
-

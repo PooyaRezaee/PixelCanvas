@@ -30,11 +30,7 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-
-    # Template urls
-    path("sample/", include(("apps.sample.urls", "sample"))),
     # API urls
-
     path("", include(("apps.api.urls", "api"))),
     # API document
     path(

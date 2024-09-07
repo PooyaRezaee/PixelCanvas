@@ -17,7 +17,7 @@ def preprocessing_filter_spec(endpoints):
 
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "PixleCanvas",
+    "TITLE": "PixelCanvas",
     "DESCRIPTION": "",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
