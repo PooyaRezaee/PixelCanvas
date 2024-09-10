@@ -13,7 +13,7 @@ services:
       POSTGRES_PASSWORD: postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    restart: always
+    restart: on-failure
 
   web:
     build:
@@ -29,14 +29,13 @@ services:
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
       - REDIS_LOCATION=redis://redis:6379
-      - DJANGO_SETTINGS_MODULE=config.settings.production
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     depends_on:
       - db
       - redis
-    restart: always
+    restart: on-failure
 
   nginx:
     build:
@@ -49,13 +48,13 @@ services:
       - media_volume:/app/media
     depends_on:
       - web
-    restart: always
+    restart: on-failure
 
   redis:
     image: redis:latest
     volumes:
       - redis_data:/data
-    restart: always
+    restart: on-failure
 
 volumes:
   postgres_data:  
