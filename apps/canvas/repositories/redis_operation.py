@@ -1,28 +1,37 @@
-import redis
+import redis.client
 from django.conf import settings
 from core import logger
 
 r = redis.from_url(settings.REDIS_LOCATION)
 
 
-def save_pixel(x, y, color):
+def save_pixel(x, y, color, pipeline: redis.client.Pipeline = None):
     try:
         key = f"pixel:{x}:{y}"
-        r.set(key, color)
+        if pipeline:
+            pipeline.set(key, color)
+        else:
+            r.set(key, color)
     except redis.RedisError as e:
         logger.error(f"Error saving pixel: {e}")
         raise
 
 
-def get_pixel(x: str | int, y: str | int) -> int:
+def get_pixel(
+    x: str | int, y: str | int, pipeline: redis.client.Pipeline = None
+) -> int | None:
     try:
         key = f"pixel:{x}:{y}"
-        color = r.get(key)
-        if color is None:
-            raise ValueError(f"Pixel at ({x}, {y}) not found.")
-        if not color.decode().isdigit():
-            raise TypeError(f"Color data for key {key} not's digit.")
-        return int(color.decode())
+        if pipeline is None:
+            color = r.get(key)
+            if color is None:
+                raise ValueError(f"Pixel at ({x}, {y}) not found.")
+            if not color.decode().isdigit():
+                raise TypeError(f"Color data for key {key} not's digit.")
+            return int(color.decode())
+        else:
+            pipeline.get(key)
+            return None
     except redis.RedisError as e:
         logger.error(f"Error retrieving pixel: {e}")
         raise
@@ -38,9 +47,13 @@ def get_canvas() -> list[tuple[int, int, str]]:
     canvas = set()
     try:
         keys = r.keys("pixel:*")
+        pipeline = r.pipeline()
         for key in keys:
+            pipeline.get(key)
+        results = pipeline.execute()
+
+        for key, color in zip(keys, results):
             x, y = key.decode().split(":")[1:]
-            color = r.get(key)
             if color is None:
                 logger.warning(f"Color data for key {key} not found.")
                 continue

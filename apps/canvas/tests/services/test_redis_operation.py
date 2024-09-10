@@ -1,5 +1,5 @@
 from django.test import TestCase
-from unittest.mock import patch
+from unittest.mock import patch,MagicMock
 import logging
 from core import logger
 from ...repositories.redis_operation import save_pixel, get_pixel, get_canvas
@@ -35,6 +35,10 @@ class TestRedisOperations(TestCase):
     @patch('apps.canvas.repositories.redis_operation.r')
     def test_get_canvas(self, mock_redis):
         mock_redis.keys.return_value = [b"pixel:1:1", b"pixel:2:2"]
-        mock_redis.get.side_effect = [b"255", b"128"]
+        mock_pipeline = MagicMock()
+        mock_redis.pipeline.return_value = mock_pipeline
+        mock_pipeline.get.side_effect = [b"255", b"128"]
+        mock_pipeline.execute.return_value = [b"255", b"128"]
+
         canvas = get_canvas()
         self.assertEqual(canvas, {(1, 1, 255), (2, 2, 128)})
