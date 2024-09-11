@@ -1,5 +1,4 @@
 from ..enums import Color
-from ..colors import get_hex_color
 from ..repositories.redis_operation import save_pixel
 
 

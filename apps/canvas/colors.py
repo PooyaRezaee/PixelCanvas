@@ -26,5 +26,5 @@ def get_hex_color(color: Color) -> str:
     return color_to_hex.get(color, "#FFFFFF")
 
 
-def get_color(num: int):
-    return color_to_hex.get(num, Color.UNKNOWN)
+def get_enum_color(number: int) -> Color:
+    return num_to_enum.get(number, Color.UNKNOWN)
