@@ -7,30 +7,30 @@ r = redis.from_url(settings.REDIS_LOCATION)
 
 def save_pixel(x, y, color, pipeline: redis.client.Pipeline = None):
     try:
-        key = f"pixel:{x}:{y}"
+        key = f"{x}:{y}"
         if pipeline:
-            pipeline.set(key, color)
+            pipeline.hset("pixels", key, color)
         else:
-            r.set(key, color)
+            r.hset("pixels", key, color)
     except redis.RedisError as e:
         logger.error(f"Error saving pixel: {e}")
         raise
 
 
 def get_pixel(
-    x: str | int, y: str | int, pipeline: redis.client.Pipeline = None
+    x: str | int, y: str | int, pipeline: redis.client.Pipeline | None = None
 ) -> int | None:
     try:
-        key = f"pixel:{x}:{y}"
+        key = f"{x}:{y}"
         if pipeline is None:
-            color = r.get(key)
+            color = r.hget("pixels", key)
             if color is None:
                 raise ValueError(f"Pixel at ({x}, {y}) not found.")
             if not color.decode().isdigit():
                 raise TypeError(f"Color data for key {key} not's digit.")
             return int(color.decode())
         else:
-            pipeline.get(key)
+            pipeline.hget("pixels", key)
             return None
     except redis.RedisError as e:
         logger.error(f"Error retrieving pixel: {e}")
@@ -46,24 +46,20 @@ def get_pixel(
 def get_canvas() -> list[tuple[int, int, str]]:
     canvas = set()
     try:
-        keys = r.keys("pixel:*")
-        pipeline = r.pipeline()
-        for key in keys:
-            pipeline.get(key)
-        results = pipeline.execute()
+        pixels = r.hgetall("pixels")
 
-        for key, color in zip(keys, results):
-            x, y = key.decode().split(":")[1:]
-            if color is None:
+        for key, value in pixels.items():
+            x, y = map(int, key.decode().split(":"))
+            if value is None:
                 logger.warning(f"Color data for key {key} not found.")
                 continue
             else:
-                if not color.decode().isdigit():
+                if not value.decode().isdigit():
                     logger.warning(f"Color data for key {key} not's digit.")
                     continue
-                color = int(color.decode())
+                value = int(value.decode())
 
-            canvas.add((int(x), int(y), color))
+            canvas.add((x, y, value))
         return canvas
     except redis.RedisError as e:
         logger.error(f"Error retrieving canvas: {e}")
@@ -74,3 +70,19 @@ def get_canvas() -> list[tuple[int, int, str]]:
     except ValueError as e:
         logger.error(e)
         raise
+
+
+def get_pixel_range(
+    x_start: int, x_end: int, y_start, y_end
+) -> list[tuple[int, int, str]]:
+    fields = [
+        f"{x}:{y}" for x in range(x_start, x_end + 1) for y in range(y_start, y_end + 1)
+    ]
+    values = r.hmget("pixels", fields)
+    result = set()
+    for field, value in zip(fields, values):
+        if value is not None:
+            x, y = map(int, field.split(":"))
+            num = int(value.decode())
+            result.add((x, y, num))
+    return result
